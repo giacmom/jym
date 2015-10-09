@@ -31,10 +31,10 @@
 	
 	<!-- 拦截器   -->
  	<mvc:interceptors>
- 		<bean class="com.lovesport.inteceptor.AuthInterceptor" />
+ 		<bean class="com.jym.inteceptor.AuthInterceptor" />
     	<mvc:interceptor>
         	<mvc:mapping path="/api/**"/>
-        	<bean class="com.lovesport.inteceptor.AuthInterceptor" />
+        	<bean class="com.jym.inteceptor.AuthInterceptor" />
     	</mvc:interceptor>
 	</mvc:interceptors>
 	
