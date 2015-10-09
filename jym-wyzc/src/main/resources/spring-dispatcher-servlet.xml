@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans 
+	xmlns="http://www.springframework.org/schema/beans"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" 
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:tx="http://www.springframework.org/schema/tx" 
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="
+        http://www.springframework.org/schema/beans     
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/mvc
+        http://www.springframework.org/schema/mvc/spring-mvc.xsd
+        http://www.springframework.org/schema/tx
+    	http://www.springframework.org/schema/tx/spring-tx.xsd
+    	http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/aop
+   	 	http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+	<!-- 自动扫描bean，把作了注解的类转换为bean -->
+	<context:component-scan base-package="com.jym" />
+
+	<mvc:annotation-driven>
+	<!--  可不设置，使用默认的超时时间 -->
+    	<mvc:async-support default-timeout="30000"/>
+	</mvc:annotation-driven>
+
+	<mvc:resources location="/html/" mapping="/html/**" />
+	
+	<!-- 拦截器   -->
+ 	<mvc:interceptors>
+ 		<bean class="com.lovesport.inteceptor.AuthInterceptor" />
+    	<mvc:interceptor>
+        	<mvc:mapping path="/api/**"/>
+        	<bean class="com.lovesport.inteceptor.AuthInterceptor" />
+    	</mvc:interceptor>
+	</mvc:interceptors>
+	
+	<!-- json -->
+	<bean id="mappingJacksonHttpMessageConverter"
+		class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
+		<property name="supportedMediaTypes">
+			<list>
+				<value>application/json;charset=UTF-8</value>
+			</list>
+		</property>
+	</bean>
+	
+	<!-- 加载配置文件 -->
+	<bean id="propertyConfigurerJdbc" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="order" value="1" />
+		<property name="ignoreUnresolvablePlaceholders" value="true" />
+		<property name="locations">
+			<list>
+				<value>classpath:/jdbc-manager-config.properties</value>
+				<value>classpath:/redis-manager-config.properties</value>  
+			</list>
+		</property>
+	</bean>
+	
+	 <!-- redis -->
+    <bean id="poolConfig" class="redis.clients.jedis.JedisPoolConfig">  
+        <property name="maxIdle" value="${redis.maxIdle}"/> 
+    </bean>  
+      
+    <bean id="connectionFactory" class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory"  
+        p:host-name="${redis.host}" 
+        p:port="${redis.port}" 
+        p:pool-config-ref="poolConfig"/>  
+      
+    <bean id="redisTemplate" class="org.springframework.data.redis.core.StringRedisTemplate">  
+        <property name="connectionFactory" ref="connectionFactory" />  
+    </bean> 
+	
+	<!-- 数据库 -->
+	<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource"
+		destroy-method="close">
+		<property name="driverClass" value="${c3p0.driverClass}"></property>
+		<property name="jdbcUrl" value="${c3p0.jdbcUrl}"></property>
+		<property name="user" value="${c3p0.user}"></property>
+		<property name="password" value="${c3p0.password}"></property>
+		<property name="acquireIncrement" value="${c3p0.acquireIncrement}"></property>
+		<property name="initialPoolSize" value="${c3p0.initialPoolSize}"></property>		
+		<property name="maxIdleTime" value="${c3p0.maxIdleTime}"></property>		
+		<property name="maxPoolSize" value="${c3p0.maxPoolSize}"></property>		
+		<property name="minPoolSize" value="${c3p0.minPoolSize}"></property>		
+		<property name="acquireRetryDelay" value="${c3p0.acquireRetryDelay}"></property>		
+		<property name="acquireRetryAttempts" value="${c3p0.acquireRetryAttempts}"></property>		
+		<property name="breakAfterAcquireFailure" value="${c3p0.breakAfterAcquireFailure}"></property>
+	</bean>
+
+	<bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+		<property name="dataSource">
+			<ref bean="dataSource" />
+		</property>
+	</bean>
+	
+	<!-- 事务控制   -->
+	<bean id="transactionManager"  
+     	class="org.springframework.jdbc.datasource.DataSourceTransactionManager">  
+     	<property name="dataSource" ref="dataSource" />  
+ 	</bean>  
+	
+	<tx:annotation-driven/>
+		
+	<!-- 拦截器方式配置事物 -->    
+
+</beans>
